@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Вхід в систему</title>
+	<link rel="stylesheet" type="text/css" href="static/css/style.css">
+	<script src="{{ url_for('static', filename='exchange.js') }}"></script>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Вхід в систему</h1>
+        <form method="POST" action="/">
+            <input type="text" id="login" name="login" placeholder="Логін" required onchange="Cassid();">
+            <input type="password" name="password" placeholder="Пароль" required>
+			<input type="hidden" id="cashier-number" name="cashier_number" value="">
+            <button type="submit">Увійти</button>
+        </form>
+    </div>
+</body>
+</html>

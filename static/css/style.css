@@ -1,0 +1,215 @@
+body {
+	font-family: Arial, sans-serif;
+	background-color: #f1f1f1;
+}
+
+.login-container {
+	margin: auto;
+	margin-top: 50px;
+	padding: 20px;
+	background-color: #fff;
+	border-radius: 5px;
+	box-shadow: 0px 0px 10px 1px rgba(0,0,0,0.3);
+	max-width: 400px;
+}
+
+h1 {
+	text-align: center;
+	margin-bottom: 20px;
+}
+
+input[type=text], input[type=password] {
+	width: 100%;
+	padding: 12px 20px;
+	margin: 8px 0;
+	display: inline-block;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	box-sizing: border-box;
+}
+
+button[type=submit] {
+	background-color: #4CAF50;
+	color: white;
+	padding: 14px 20px;
+	margin: 8px 0;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	width: 100%;
+}
+
+button[type=submit]:hover {
+	background-color: #45a049;
+}
+.exchange-container {
+  margin: 0 auto;
+  width: 80%;
+  max-width: 500px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+h1 {
+  text-align: center;
+  font-size: 2em;
+  margin-bottom: 20px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+label {
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+input[type="number"],
+select {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+button[type="submit"] {
+  margin-top: 20px;
+  background-color: #0099ff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+  background-color: #0077cc;
+}
+button[class="buy"] {
+  margin-top: 20px;
+  background-color: #18db63;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button[class="buy"]:hover {
+  background-color: #0077cc;
+}
+
+button[class="sell"] {
+  margin-top: 20px;
+  background-color: #fd0202;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button[class="sell"]:hover {
+  background-color: #0077cc;
+}
+.balances-container {
+  float: left;
+  margin-right: 50px;
+}
+
+table {
+  border-collapse: collapse;
+  margin-left: 30px;
+  width: 100%;
+}
+
+th, td {
+  text-align: center;
+  padding: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  background-color: #4CAF50;
+  color: white;
+}
+h2 {
+  margin-left: 80px;
+}
+.courses-table {
+  float: right;
+  border-collapse: collapse;
+  width: 30%;
+  margin-top: 65px;
+  margin-left: 70px;
+  
+}
+.balances-container, .exchange-container {
+  display: inline-block;
+  vertical-align: top;
+}
+h3 {
+  float: right;
+  margin-left: 40px;
+}
+button[type="save"] {
+  margin-top: 300px;
+  background-color: #0099ff;
+  color: #fff;
+  float: right;
+  border: none;
+  border-radius: 5px;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.cancel-btn {
+  background-color: #ff0000;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background-color: #cc0000;
+}
+
+#selltransactions-table {
+  width: 100%;
+  border-collapse: collapse;
+  
+}
+
+#selltransactions-table th,
+#selltransactions-table td {
+  padding: 8px;
+  border: 1px solid #0066ffab;
+}
+
+#selltransactions-table th {
+  background-color: #000000a1;
+}
+
+#selltransactions-table tr:nth-child(even) {
+  background-color: #ffffff;
+}
+
+#selltransactions-table tr:hover {
+  background-color: #167c2f00;
+}
+

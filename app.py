@@ -3,34 +3,57 @@ from db import *
 # Отображение страницы входа
 @app.route("/")
 def login():
-    with Session() as session:  # Відкриття нової сесії
         return render_template("login.html")
 
-# Проверка логина и пароля
+# Функция проверки логина
 @app.route("/", methods=["POST"])
 def check_login():
     login = request.form["login"]
     password = request.form["password"]
-    with Session() as session:  # Відкриття нової сесії
-        cashier = session.query(User).filter(User.login == login, User.password == password).first()
+    with Session() as db_session:  
+        cashier = db_session.query(User).filter(User.login == login, User.password == password).first()
         if cashier:
-            balances = session.query(Balance.currency, Balance.balance).join(Balance.user).filter(
-                User.login == login, User.password == password).all()
-            courses = session.query(Course.currency, Course.buy_rate, Course.sell_rate).filter(
-                Course.cass_id == cashier.cass_id).all()
-            sell_transactions = session.query(SellTransaction).filter(
-                SellTransaction.cass_id == cashier.cass_id,
-                SellTransaction.date >= func.now() - timedelta(minutes=15)
-                ).all()
-            return render_template("exchange.html", balances=balances, courses=courses, sell_transactions=sell_transactions, cashier_number=cashier.cass_id)
+            # Сохранение данных в сессии
+            session["login"] = login
+            session["password"] = password
+            session["cashier_id"] = cashier.cass_id
+            return redirect(url_for("exchange"))
         else:
             return "Пароль або логін введено невірно"
 
+@app.route("/logout")
+def logout():
+    # Очистка данных сессии
+    session.clear()
+    return redirect(url_for("login"))
+
+# Страница обмена
+@app.route("/exchange")
+def exchange():
+    # Получение данных из сессии
+    login = session.get("login")
+    password = session.get("password")
+    cashier_id = session.get("cashier_id")
+    if login and password and cashier_id:
+        # Использование данных для рендеринга шаблона
+        with Session() as db_session:
+            balances = db_session.query(Balance.currency, Balance.balance).join(Balance.user).filter(
+                User.login == login, User.password == password).all()
+            courses = db_session.query(Course.currency, Course.buy_rate, Course.sell_rate).filter(
+                Course.cass_id == cashier_id).all()
+            sell_transactions = db_session.query(SellTransaction).filter(
+                SellTransaction.cass_id == cashier_id,
+                SellTransaction.date >= func.now() - timedelta(minutes=15)
+                ).all()
+            return render_template("exchange.html", balances=balances, courses=courses, sell_transactions=sell_transactions, cashier_number=cashier_id)
+    else:
+        return "Error of logining/ CODE 1"
+
 # Обновление таблицы balances после продажи валюты
 def update_balances_after_sell(cass_id, currency, amount, total_amount):
-    with Session() as session:  # Відкриття нової сесії
-        currency_balance = session.query(Balance).filter_by(cass_id=cass_id, currency=currency).first()
-        uah_balance = session.query(Balance).filter_by(cass_id=cass_id, currency='UAH').first()
+    with Session() as db_session:  # Відкриття нової сесії
+        currency_balance = db_session.query(Balance).filter_by(cass_id=cass_id, currency=currency).first()
+        uah_balance = db_session.query(Balance).filter_by(cass_id=cass_id, currency='UAH').first()
 
         if currency_balance and uah_balance:
             currency_balance.balance -= amount
@@ -38,11 +61,11 @@ def update_balances_after_sell(cass_id, currency, amount, total_amount):
 
             # Отдельный сеанс для коммита
             try:
-                session.commit()
+                db_session.commit()
 
                 return True
             except Exception as e:
-                session.rollback()
+                db_session.rollback()
                 return False
 
         return False
@@ -50,9 +73,9 @@ def update_balances_after_sell(cass_id, currency, amount, total_amount):
 
 # Обновление таблицы balances после покупки валюты
 def update_balances_after_buy(cass_id, currency, amount, total_amount):
-    with Session() as session:  # Відкриття нової сесії
-        currency_balance = session.query(Balance).filter_by(cass_id=cass_id, currency=currency).first()
-        uah_balance = session.query(Balance).filter_by(cass_id=cass_id, currency='UAH').first()
+    with Session() as db_session:  # Відкриття нової сесії
+        currency_balance = db_session.query(Balance).filter_by(cass_id=cass_id, currency=currency).first()
+        uah_balance = db_session.query(Balance).filter_by(cass_id=cass_id, currency='UAH').first()
 
         if currency_balance and uah_balance:
             currency_balance.balance += amount
@@ -60,11 +83,11 @@ def update_balances_after_buy(cass_id, currency, amount, total_amount):
 
             # Отдельный сеанс для коммита
             try:
-                session.commit()
+                db_session.commit()
 
                 return True
             except Exception as e:
-                session.rollback()
+                db_session.rollback()
                 return False
 
         return False
@@ -72,17 +95,17 @@ def update_balances_after_buy(cass_id, currency, amount, total_amount):
 
 # Добавление записи в таблицу операций после продажи валюты
 def add_transaction_sell(date, cass_id, currency, amount, total_amount, rate):
-    with Session() as session:  # Відкриття нової сесії
+    with Session() as db_session:  # Відкриття нової сесії
         transaction = SellTransaction(date=date, cass_id=cass_id, currency=currency, amount=amount, total_amount=total_amount, operation_type='Продаж', rate=rate)
-        session.add(transaction)
-        session.commit()
+        db_session.add(transaction)
+        db_session.commit()
 
 
 def add_transaction_buy(date, cass_id, currency, amount, total_amount, rate):
-    with Session() as session:  # Відкриття нової сесії
+    with Session() as db_session:  # Відкриття нової сесії
         transaction = SellTransaction(date=date, cass_id=cass_id, currency=currency, amount=amount, total_amount=total_amount, operation_type='Купівля', rate=rate)
-        session.add(transaction)
-        session.commit()
+        db_session.add(transaction)
+        db_session.commit()
 
 
 # Обработка кнопки продать валюту
@@ -105,9 +128,9 @@ def sell_currency():
         if amount <= 0 or total_amount <= 0:
             return jsonify({'success': False, 'message': 'Некоректні дані для продажу валюти'})
 
-        with Session() as session:  # Відкриття нової сесії
+        with Session() as db_session:  # Відкриття нової сесії
             # Проверка наличия достаточного баланса для продажи валюты
-            balance = session.query(Balance).filter(
+            balance = db_session.query(Balance).filter(
                 Balance.cass_id == cass_id,
                 Balance.currency == currency
             ).first()
@@ -143,9 +166,9 @@ def buy_currency():
         if amount <= 0 or total_amount <= 0:
             return jsonify({'success': False, 'message': 'Некоректні дані для купівлі валюти'})
 
-        with Session() as session:  # Відкриття нової сесії
+        with Session() as db_session:  # Відкриття нової сесії
             # Проверка наличия достаточного баланса для продажи валюты
-            balance = session.query(Balance).filter(
+            balance = db_session.query(Balance).filter(
                 Balance.cass_id == cass_id,
                 Balance.currency == 'UAH'
             ).first()
@@ -165,8 +188,8 @@ def buy_currency():
 # Оновлення таблиці балансів для каси після операції
 @app.route("/update_balances/<int:cass_id>", methods=["GET"])
 def update_balances(cass_id):
-    with Session() as session:  # Відкриття нової сесії
-        balances = session.query(Balance).filter_by(cass_id=cass_id).all()
+    with Session() as db_session:  # Відкриття нової сесії
+        balances = db_session.query(Balance).filter_by(cass_id=cass_id).all()
         balances_data = [{"currency": balance.currency, "balance": balance.balance} for balance in balances]
         return jsonify(balances_data)
 
@@ -176,8 +199,8 @@ def get_recent_transactions():
     cass_id = request.args.get("cass_id")
     if cass_id is not None:
         cass_id = int(cass_id)
-    with Session() as session:  # Відкриття нової сесії
-        recent_transactions = session.query(SellTransaction).filter(
+    with Session() as db_session:  # Відкриття нової сесії
+        recent_transactions = db_session.query(SellTransaction).filter(
             SellTransaction.cass_id == cass_id,
             SellTransaction.date >= func.now() - timedelta(minutes=15)
         ).all()
@@ -200,16 +223,16 @@ def get_recent_transactions():
 def cancel_transaction(transaction_id):
     try:
         transaction_id = int(transaction_id)
-        with Session() as session:  # Відкриття нової сесії
-            transaction = session.query(SellTransaction).get(transaction_id)
+        with Session() as db_session:  # Відкриття нової сесії
+            transaction = db_session.query(SellTransaction).get(transaction_id)
             if transaction:
                 # Перевірка часу проведення операції
                 current_time = datetime.now()
                 time_diff = current_time - transaction.date
                 if time_diff.total_seconds() <= 900:  # 15 хвилин в секундах
                     # Отримання балансу каси до операції
-                    currency_balance = session.query(Balance).filter_by(cass_id=transaction.cass_id, currency=transaction.currency).first()
-                    uah_balance = session.query(Balance).filter_by(cass_id=transaction.cass_id, currency='UAH').first()
+                    currency_balance = db_session.query(Balance).filter_by(cass_id=transaction.cass_id, currency=transaction.currency).first()
+                    uah_balance = db_session.query(Balance).filter_by(cass_id=transaction.cass_id, currency='UAH').first()
 
                     if currency_balance and uah_balance:
                         if transaction.operation_type == "Продаж":
@@ -223,11 +246,11 @@ def cancel_transaction(transaction_id):
                         else:
                             return 'Некоректний тип операції'
 
-                        session.delete(transaction)
+                        db_session.delete(transaction)
                         try:
-                            session.commit()
+                            db_session.commit()
                         except Exception as e:
-                            session.rollback()
+                            db_session.rollback()
                             return "Error of commit cancel transaction/error code #105"
                         return True
                     else:
@@ -260,24 +283,24 @@ def save_courses():
     cass_id = int(cashier_number)
     courses = []
     prefix_lengths = {'buy_': 4, 'sell_': 5}
-    with Session() as session:  # Відкриття нової сесії
+    with DBSession() as db_session:  # Відкриття нової сесії
         for currency, rate in data.items():
             for prefix, prefix_length in prefix_lengths.items():
                 if currency.startswith(prefix):
                     currency = currency[prefix_length:]
                     rate = float(rate)
-                    course = session.query(Course).filter_by(cass_id=cass_id, currency=currency).first()
+                    course = db_session.query(Course).filter_by(cass_id=cass_id, currency=currency).first()
                     if course is None or (course.buy_rate != rate and prefix == 'buy_') or (course.sell_rate != rate and prefix == 'sell_'):
                         if course is None:
                             course = Course(cass_id=cass_id, currency=currency, buy_rate=0, sell_rate=0)
-                            session.add(course)
+                            db_session.add(course)
                         if prefix == 'buy_':
                             course.buy_rate = rate
                         else:
                             course.sell_rate = rate
                         course = {'currency': course.currency, 'buy_rate': course.buy_rate, 'sell_rate': course.sell_rate}
                         courses.append(course)
-                        session.commit()
+                        db_session.commit()
                     break
     
     if courses:

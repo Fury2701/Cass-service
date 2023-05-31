@@ -1,12 +1,15 @@
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, session, redirect, url_for
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, DateTime, func
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker, relationship, Session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
+import secrets
 
 app = Flask(__name__)
+
+app.secret_key = secrets.token_hex(16) #Ключ сессии
 
 # Подключение к базе данных
 engine = create_engine('mysql+pymysql://root:2701172004@localhost/Users', echo=True)
@@ -63,6 +66,18 @@ class SellTransaction(Base):
 
     user = relationship("User", back_populates="selltransactions")
 
+#Класс который описывает контекстный менеджер управления сессиями в базе данных(Нужно доработать)
+class DBSession:
+    def __enter__(self):
+        self.db_session = Session()  # Открываем сессию
+        return self.db_session
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is not None:
+            self.db_session.rollback()  # Откатываем изменения при возникновении ошибки
+        else:
+            self.db_session.commit()  # Фиксируем изменения
+        self.db_session.close()  # Закрываем сессию
 
 # Создание таблиц
 Base.metadata.create_all(engine)

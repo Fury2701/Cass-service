@@ -5,6 +5,20 @@
     <link rel="stylesheet" type="text/css" href="static/css/style.css">
 </head>
 <body>
+    <div class="header">
+      <h1 class="logo">FinTech</h1>
+      <nav>
+          <ul class="nav-links">
+              <li><a href="/exchange">Продаж/Купівля</a></li>
+              <li><a href="#">Підкріплення</a></li>
+              <li><a href="#">Історія</a></li>
+              <li><a href="/logout">Вихід</a></li>
+          </ul>
+      </nav>
+      <p class="cashier-number">Каса №<span id="cashier-number">{{ cashier_number }}</span></p>
+    </div>
+
+
     <div class="courses-table">
         <form>
           <table>
@@ -30,7 +44,7 @@
             </tbody>
           </table>
           <input type="hidden" id="cashier-number" value="{{ cashier_number }}">
-          <button type="submit" id= "savebutton" value="save">Зберегти</button>
+          <button type="submit" id="savebutton" value="save">Зберегти</button>
         </form>
     </div>
 
@@ -66,7 +80,7 @@
             </select>
             <label for="amount">Введіть суму:</label>
             <input type="number" name="amount" id="amount" min="0" step="0.01" required>
-            <button type="submit" name="action" class ="buy" value="buy">Купити валюту</button>
+            <button type="submit" name="action" class="buy" value="buy">Купити валюту</button>
             <button type="button" name="action" class="sell" value="sell">Продати валюту</button>
         </form>
     </div>

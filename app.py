@@ -154,6 +154,13 @@ def history():
             SellTransaction.cass_id == cashier_id).order_by(SellTransaction.date.desc()).all()
         return render_template("history.html", sell_transactions=sell_transactions, cashier_number=cashier_id)
 
+@app.route("/incasation", methods=["GET"])
+def incasation():
+    cashier_id = session.get("cashier_id")
+    with Session() as db_session:
+        balances = db_session.query(Balance.currency, Balance.balance).join(Balance.user).filter(User.cass_id == cashier_id).all()
+        return render_template("incasation.html", balances=balances, cashier_number=cashier_id)
+
 @app.route("/buy", methods=["POST"])
 def buy_currency():
     data = request.get_json()

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>FinTech</title>
+    </head>
+    <body>
+        <div class="header">
+            <h1 class="logo">FinTech</h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="/exchange">Продаж/Купівля</a></li>
+                    <li><a href="/incasation">Підкріплення</a></li>
+                    <li><a href="/history">Історія</a></li>
+                    <li><a href="/logout">Вихід</a></li>
+                </ul>
+            </nav>
+            <p class="cashier-number">Каса №<span id="cashier-number">{{ cashier_number }}</span></p>
+        </div>
+                                                                    
+        <div class="balances-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Валюта</th>
+                        <th>Залишок</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for currency, balance in balances %}
+                        <tr>
+                            <td>{{ currency }}</td>
+                            <td>{{ balance }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <style>
+            .green-button {
+                background-color: green;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                cursor: pointer;
+            }
+
+            .red-button {
+                background-color: red;
+                color: white;
+                padding: 10px 20px;
+                border: none;
+                cursor: pointer;
+            }
+        </style>
+        <div class="buttons-container">
+            <button class="green-button">Підкріплення</button>
+            <button class="red-button">Інкасація</button>
+        </div>
+        <script src="{{ url_for('static', filename='exchange.js') }}"></script>
+        <link rel="stylesheet" type="text/css" href="static/css/history.css">
+    </body>
+</html>

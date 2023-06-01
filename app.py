@@ -100,7 +100,7 @@ def add_transaction_sell(date, cass_id, currency, amount, total_amount, rate):
         db_session.add(transaction)
         db_session.commit()
 
-
+#Добавление записи после покупки
 def add_transaction_buy(date, cass_id, currency, amount, total_amount, rate):
     with Session() as db_session:  # Відкриття нової сесії
         transaction = SellTransaction(date=date, cass_id=cass_id, currency=currency, amount=amount, total_amount=total_amount, operation_type='Купівля', rate=rate)
@@ -146,6 +146,7 @@ def sell_currency():
     except ValueError:
         return jsonify({'success': False, 'message': 'Некоректні дані для продажу валюти'})
 
+#Переходник на страницу истории
 @app.route("/history", methods=["GET"])
 def history():
     cashier_id = session.get("cashier_id")
@@ -154,13 +155,16 @@ def history():
             SellTransaction.cass_id == cashier_id).order_by(SellTransaction.date.desc()).all()
         return render_template("history.html", sell_transactions=sell_transactions, cashier_number=cashier_id)
 
+#Переходник на страницу инкасации
 @app.route("/incasation", methods=["GET"])
 def incasation():
     cashier_id = session.get("cashier_id")
     with Session() as db_session:
         balances = db_session.query(Balance.currency, Balance.balance).join(Balance.user).filter(User.cass_id == cashier_id).all()
-        return render_template("incasation.html", balances=balances, cashier_number=cashier_id)
+        recent_transactions = db_session.query(OperationHistory).filter(OperationHistory.cass_id == cashier_id).order_by(OperationHistory.data.desc()).all()
+        return render_template("incasation.html", balances=balances, cashier_number=cashier_id,recent_transactions=recent_transactions)
 
+#Обработчик кнопки купить
 @app.route("/buy", methods=["POST"])
 def buy_currency():
     data = request.get_json()
@@ -233,7 +237,87 @@ def get_recent_transactions():
             })
 
         return jsonify(transactions)
+    
 
+# Обработка кнопки подкреп валюту
+@app.route("/adding", methods=["POST"])
+def adding():
+    data = request.get_json()
+    currency = data.get('currency')
+    amount = data.get('amount')
+    cashier_number = data.get('cashier_number')
+
+    if currency is None or amount is None or cashier_number is None:
+        return jsonify({'success': False, 'message': 'Недостатньо даних для підкріплення валюти'})
+
+    cass_id = int(cashier_number)
+    try:
+        amount = float(amount)
+        if amount <= 0:
+            return jsonify({'success': False, 'message': 'Некоректні дані для підкріплення валюти'})
+
+        with Session() as db_session:  # Відкриття нової сесії
+            if update_balances_after_add(cass_id, currency, amount):
+                date = datetime.now()
+                add_operation_add(date, cass_id, currency, amount)
+                return jsonify({'success': True, 'message': 'Валюта успішно підкріплена'})
+            else:
+                return jsonify({'success': False, 'message': 'Не вдалося оновити баланс після підкріплення валюти'})
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Некоректні дані для підкріплення валюти'})
+
+# Добавление записи в таблицу операций после подкреп валюты
+def add_operation_add(date, cass_id, currency, amount):
+    with Session() as db_session:  # Відкриття нової сесії
+        balance = db_session.query(Balance).filter_by(cass_id=cass_id, currency=currency).first()
+        total_amount = balance.balance if balance else 0.0  # Получить числовое значение баланса
+        transaction = OperationHistory(data=date, cass_id=cass_id, currency=currency, amount=amount, total_amount=total_amount, operation_type='Підкріплення')
+        db_session.add(transaction)
+        db_session.commit()
+
+# Обновление таблицы balances после подкреп валюты
+def update_balances_after_add(cass_id, currency, amount):
+    with Session() as db_session:  # Відкриття нової сесії
+        currency_balance = db_session.query(Balance).filter_by(cass_id=cass_id, currency=currency).first()
+        
+
+        if currency_balance:
+            currency_balance.balance += amount
+            # Отдельный сеанс для коммита
+            try:
+                db_session.commit()
+
+                return True
+            except Exception as e:
+                db_session.rollback()
+                return False
+
+        return False
+
+#Получения списка подкреп/инкас
+@app.route("/incasationget", methods=["GET"])
+def incasation_get():
+    cass_id = request.args.get("cass_id")
+    if cass_id is not None:
+        cass_id = int(cass_id)
+    with Session() as db_session:  # Відкриття нової сесії
+        recent_transactions = db_session.query(OperationHistory).filter(OperationHistory.cass_id == cass_id).order_by(
+            OperationHistory.data.desc()).all()
+
+        transactions = []
+        for transaction in recent_transactions:
+            transactions.append({
+                "date": transaction.data.strftime("%Y-%m-%d %H:%M:%S"),
+                "cass_id": transaction.cass_id,
+                "currency": transaction.currency,
+                "amount": transaction.amount,
+                "total_amount": transaction.total_amount,
+                "operation_type": transaction.operation_type
+            })
+
+        return jsonify(transactions)
+
+#Обработчик отмены транзакции
 def cancel_transaction(transaction_id):
     try:
         transaction_id = int(transaction_id)

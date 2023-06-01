@@ -27,6 +27,8 @@ class User(Base):
     balances = relationship("Balance", back_populates="user")
     courses = relationship("Course", back_populates="user")
     selltransactions = relationship("SellTransaction", back_populates="user")
+    operation_history = relationship("OperationHistory", back_populates="user")
+
 
 
 class Balance(Base):
@@ -65,6 +67,21 @@ class SellTransaction(Base):
     rate = Column(Float, nullable=False)
 
     user = relationship("User", back_populates="selltransactions")
+
+#Таблица инкас/подкреп
+class OperationHistory(Base):
+    __tablename__ = 'operation_history'
+
+    id = Column(Integer, primary_key=True)
+    data = Column(DateTime, nullable=False)
+    cass_id = Column(Integer, ForeignKey('users.cass_id'), nullable=False)
+    currency = Column(String(50), nullable=False)
+    amount = Column(Float, nullable=False)
+    operation_type = Column(String(50), nullable=False)
+    total_amount = Column(Float, nullable=False)
+
+    user = relationship("User", back_populates="operation_history")
+    
 
 #Класс который описывает контекстный менеджер управления сессиями в базе данных(Нужно доработать)
 class DBSession:

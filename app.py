@@ -145,7 +145,14 @@ def sell_currency():
                 return jsonify({'success': False, 'message': 'Не вдалося оновити баланс після продажу валюти'})
     except ValueError:
         return jsonify({'success': False, 'message': 'Некоректні дані для продажу валюти'})
-    
+
+@app.route("/history", methods=["GET"])
+def history():
+    cashier_id = session.get("cashier_id")
+    with Session() as db_session:
+        sell_transactions = db_session.query(SellTransaction).filter(
+            SellTransaction.cass_id == cashier_id).order_by(SellTransaction.date.desc()).all()
+        return render_template("history.html", sell_transactions=sell_transactions, cashier_number=cashier_id)
 
 @app.route("/buy", methods=["POST"])
 def buy_currency():

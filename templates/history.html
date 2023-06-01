@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FinTech</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .header {
+            background-color: #f2f2f2;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 24px;
+        }
+
+        .nav-links {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .nav-links li {
+            margin-right: 20px;
+        }
+
+        .nav-links li a {
+            text-decoration: none;
+            color: #333;
+        }
+
+        .cashier-number {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1 class="logo">FinTech</h1>
+    <nav>
+        <ul class="nav-links">
+            <li><a href="/exchange">Продаж/Купівля</a></li>
+            <li><a href="#">Підкріплення</a></li>
+            <li><a href="/history">Історія</a></li>
+            <li><a href="/logout">Вихід</a></li>
+        </ul>
+    </nav>
+    <p class="cashier-number">Каса №<span id="cashier-number">{{ cashier_number }}</span></p>
+</div>
+
+<table>
+    <thead>
+    <tr>
+        <th>Дата</th>
+        <th>Номер каси</th>
+        <th>Валюта</th>
+        <th>Сума</th>
+        <th>Сума грн</th>
+        <th>Курс</th>
+        <th>Тип операції</th>
+    </tr>
+    </thead>
+    <tbody>
+        {% for transaction in sell_transactions %}
+        <tr>
+            <td>{{ transaction.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td>{{ transaction.cass_id }}</td>
+            <td>{{ transaction.currency }}</td>
+            <td>{{ transaction.amount }}</td>
+            <td>{{ transaction.total_amount }}</td>
+            <td>{{ transaction.rate }}</td>
+            <td>{{ transaction.operation_type }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{{ url_for('static', filename='exchange.js') }}"></script>
+<link rel="stylesheet" type="text/css" href="static/css/history.css">
+</body>
+</html>

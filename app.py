@@ -44,7 +44,7 @@ def exchange():
             sell_transactions = db_session.query(SellTransaction).filter(
                 SellTransaction.cass_id == cashier_id,
                 SellTransaction.date >= func.now() - timedelta(minutes=15)
-                ).all()
+                ).order_by(SellTransaction.date.desc()).all()
             return render_template("exchange.html", balances=balances, courses=courses, sell_transactions=sell_transactions, cashier_number=cashier_id)
     else:
         return "Error of logining/ CODE 1"
@@ -221,7 +221,7 @@ def get_recent_transactions():
         recent_transactions = db_session.query(SellTransaction).filter(
             SellTransaction.cass_id == cass_id,
             SellTransaction.date >= func.now() - timedelta(minutes=15)
-        ).all()
+        ).order_by(SellTransaction.date.desc()).all()
 
         transactions = []
         for transaction in recent_transactions:

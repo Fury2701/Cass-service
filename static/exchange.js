@@ -1,4 +1,4 @@
-const cashierNumber = document.getElementById("cashier-number").value;
+const cashierNumber = document.getElementById("cashier-number").textContent;
 
 // Обновление данных таблицы selltransactions-table
 const updateSellTransactionsTable = (cashierNumber) => {

@@ -213,3 +213,51 @@ button[type="save"] {
   background-color: #167c2f00;
 }
 
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background-color: #28292d;
+}
+
+.logo {
+  color: #c300ff;
+  font-weight: 500;
+  font-size: 1.2em;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+}
+
+.nav-links li {
+  margin-left: 20px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #8f8f8f;
+  font-size: 0.75em;
+  transition: color 0.3s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  color: #c300ff;
+}
+
+.cashier-number {
+  color: #8f8f8f;
+  font-size: 0.75em;
+}

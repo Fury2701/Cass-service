@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FinTech</title>
+</head>
+<body>
+    <div class="header">
+        <h1 class="logo">FinTech</h1>
+        <nav>
+            <ul class="nav-links">
+                <li><a href="/exchange">Продаж/Купівля</a></li>
+                <li><a href="/incasation">Підкріплення</a></li>
+                <li><a href="/history">Історія</a></li>
+                <li><a href="/logout">Вихід</a></li>
+            </ul>
+        </nav>
+        <p class="cashier-number">Каса №<span id="cashier-number">{{ cashier_number }}</span></p>
+    </div>
+
+    <div class="balances-container">
+        <table>
+            <thead>
+            <tr>
+                <th>Валюта</th>
+                <th>Залишок</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for currency, balance in balances %}
+            <tr>
+                <td>{{ currency }}</td>
+                <td>{{ balance }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="input-container">
+        <input id="amount" type="text" name="amount" placeholder="Введіть суму">
+        <select id="currency" name="currency">
+            {% for currency, balance in balances %}
+            <option value="{{ currency }}">{{ currency }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="buttons-container">
+        <button value="adding-button" class="green-button">Підкріплення</button>
+        <button value="incasation-button" class="red-button">Інкасація</button>
+    </div>
+
+    <div class="history-table-container" id="history-table-container">
+        <h2>Історія Інкасацій/Підкріплень</h2>
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Каса</th>
+                    <th>Валюта</th>
+                    <th>Сума операції</th>
+                    <th>Тип</th>
+                    <th>Ітоговий баланс</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transaction in recent_transactions %}
+                <tr>
+                    <td>{{ transaction.data.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ transaction.cass_id }}</td>
+                    <td>{{ transaction.currency }}</td>
+                    <td>{{ transaction.amount }}</td>
+                    <td>{{ transaction.operation_type }}</td>
+                    <td>{{ transaction.total_amount }}</td>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script src="{{ url_for('static', filename='incasation.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="static/css/incasation.css">
+</body>
+</html>

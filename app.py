@@ -157,7 +157,7 @@ def history():
 
 #Переходник на страницу инкасации
 @app.route("/incasation", methods=["GET"])
-def incasation():
+def incasation_page():
     cashier_id = session.get("cashier_id")
     with Session() as db_session:
         balances = db_session.query(Balance.currency, Balance.balance).join(Balance.user).filter(User.cass_id == cashier_id).all()
@@ -266,6 +266,41 @@ def adding():
     except ValueError:
         return jsonify({'success': False, 'message': 'Некоректні дані для підкріплення валюти'})
 
+# Обработка кнопки инкасация валюту
+@app.route("/incas", methods=["POST"])
+def incasation():
+    data = request.get_json()
+    currency = data.get('currency')
+    amount = data.get('amount')
+    cashier_number = data.get('cashier_number')
+
+    if currency is None or amount is None or cashier_number is None:
+        return jsonify({'success': False, 'message': 'Недостатньо даних для інкасації валюти'})
+
+    cass_id = int(cashier_number)
+    try:
+        amount = float(amount)
+        if amount <= 0:
+            return jsonify({'success': False, 'message': 'Некоректні дані для інкасації валюти'})
+
+        with Session() as db_session:  # Відкриття нової сесії
+            # Проверка наличия достаточного баланса для продажи валюты
+            balance = db_session.query(Balance).filter(
+                Balance.cass_id == cass_id,
+                Balance.currency == currency
+            ).first()
+            if balance is None or balance.balance < amount:
+                return jsonify({'success': False, 'message': 'Недостатній баланс для інкасації валюти'})
+            
+            if update_balances_after_incasation(cass_id, currency, amount):
+                date = datetime.now()
+                add_operation_incasation(date, cass_id, currency, amount)
+                return jsonify({'success': True, 'message': 'Валюта успішно інкасована'})
+            else:
+                return jsonify({'success': False, 'message': 'Не вдалося оновити баланс після інкасації валюти'})
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Некоректні дані для інкасації валюти'})
+
 # Добавление записи в таблицу операций после подкреп валюты
 def add_operation_add(date, cass_id, currency, amount):
     with Session() as db_session:  # Відкриття нової сесії
@@ -274,6 +309,34 @@ def add_operation_add(date, cass_id, currency, amount):
         transaction = OperationHistory(data=date, cass_id=cass_id, currency=currency, amount=amount, total_amount=total_amount, operation_type='Підкріплення')
         db_session.add(transaction)
         db_session.commit()
+
+# Добавление записи в таблицу операций после инкачации валюты
+def add_operation_incasation(date, cass_id, currency, amount):
+    with Session() as db_session:  # Відкриття нової сесії
+        balance = db_session.query(Balance).filter_by(cass_id=cass_id, currency=currency).first()
+        total_amount = balance.balance if balance else 0.0  # Получить числовое значение баланса
+        transaction = OperationHistory(data=date, cass_id=cass_id, currency=currency, amount=amount, total_amount=total_amount, operation_type='Інкасація')
+        db_session.add(transaction)
+        db_session.commit()
+
+# Обновление таблицы balances после подкреп валюты
+def update_balances_after_incasation(cass_id, currency, amount):
+    with Session() as db_session:  # Відкриття нової сесії
+        currency_balance = db_session.query(Balance).filter_by(cass_id=cass_id, currency=currency).first()
+        
+
+        if currency_balance:
+            currency_balance.balance -= amount
+            # Отдельный сеанс для коммита
+            try:
+                db_session.commit()
+
+                return True
+            except Exception as e:
+                db_session.rollback()
+                return False
+
+        return False
 
 # Обновление таблицы balances после подкреп валюты
 def update_balances_after_add(cass_id, currency, amount):

@@ -148,3 +148,53 @@ function updateBalancesTable(cashierNumber) {
       alert('Будь ласка, виберіть валюту та вкажіть суму');
     }
   }); 
+
+  // фунционал кнопки инкасировать
+  const incasButton = document.querySelector('button[value="incasation-button"]'); 
+  incasButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    const currencySelect = document.getElementById("currency");
+    const selectedCurrency = currencySelect.value;
+    const amountInput = document.getElementById("amount");
+    const amount = parseFloat(amountInput.value);
+  
+    if (selectedCurrency && amount && cashierNumber) {
+      const confirmationMessage = `Підтвердіть інкасацію ${amount.toFixed(2)} ${selectedCurrency}`;
+      if (confirm(confirmationMessage)) {
+         nth=`Ви впевнені, що хочете інкасувати ${amount.toFixed(2)} ${selectedCurrency}`;
+         const proceed = confirm(nth);
+        if (proceed) {
+          const data = {
+            currency: selectedCurrency,
+            amount: amount.toFixed(2),
+            cashier_number: cashierNumber // Добавление номера кассы к данным
+          };
+  
+          fetch('/incas', {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                alert(data.message);
+                // Вызов функции обновления балансов по валютах и передача в нее номера кассы
+                updateBalancesTable(cashierNumber);
+                updateSellTransactionsTable(cashierNumber); // Вызов функции обновления таблицы <=15 min
+              } else {
+                alert(data.message);
+              }
+            })
+            .catch(error => {
+              console.error(error);
+              alert('Помилка підключення');
+            });
+        }
+      }
+    } else {
+      alert('Будь ласка, виберіть валюту та вкажіть суму');
+    }
+  }); 

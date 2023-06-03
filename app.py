@@ -152,7 +152,7 @@ def history():
     cashier_id = session.get("cashier_id")
     with Session() as db_session:
         sell_transactions = db_session.query(SellTransaction).filter(
-            SellTransaction.cass_id == cashier_id).order_by(SellTransaction.date.desc()).all()
+            SellTransaction.cass_id == cashier_id).order_by(SellTransaction.date.desc()).limit(20).all()
         return render_template("history.html", sell_transactions=sell_transactions, cashier_number=cashier_id)
 
 #Переходник на страницу инкасации
@@ -468,6 +468,46 @@ def save_courses():
         return jsonify({'success': True, 'courses': courses, 'message': 'Курс змінено'})
     else:
         return jsonify({'success': False, 'message': 'Курс не змінився'})
+    
+# Обработка кнопки получить список операций
+@app.route("/get_operations", methods=["POST"])
+def get_operations():
+    data = request.get_json()
+    from_date = data.get('fromDate')
+    to_date = data.get('toDate')
+
+    if from_date is None or to_date is None:
+        return jsonify({'success': False, 'message': 'Недостаточно данных для получения списка операций'})
+
+    try:
+        from_date = datetime.strptime(from_date, "%Y-%m-%d")
+        to_date = datetime.strptime(to_date, "%Y-%m-%d")
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Некорректный формат даты'})
+
+    with Session() as db_session:
+        cashier_id = session.get("cashier_id")
+
+        sell_transactions = db_session.query(SellTransaction).filter(
+            SellTransaction.cass_id == cashier_id,
+            SellTransaction.date >= from_date,
+            SellTransaction.date <= to_date + timedelta(days=1)  # Включить операции до конца выбранного дня
+        ).order_by(SellTransaction.date.desc()).all()
+
+        transactions = []
+        for transaction in sell_transactions:
+            transactions.append({
+                "id": transaction.id,
+                "date": transaction.date.strftime("%Y-%m-%d %H:%M:%S"),
+                "cass_id": transaction.cass_id,
+                "currency": transaction.currency,
+                "amount": transaction.amount,
+                "rate": transaction.rate,
+                "total_amount": transaction.total_amount,
+                "operation_type": transaction.operation_type
+            })
+
+        return jsonify(transactions)
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0')

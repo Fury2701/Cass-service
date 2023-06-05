@@ -161,7 +161,7 @@ def incasation_page():
     cashier_id = session.get("cashier_id")
     with Session() as db_session:
         balances = db_session.query(Balance.currency, Balance.balance).join(Balance.user).filter(User.cass_id == cashier_id).all()
-        recent_transactions = db_session.query(OperationHistory).filter(OperationHistory.cass_id == cashier_id).order_by(OperationHistory.data.desc()).all()
+        recent_transactions = db_session.query(OperationHistory).filter(OperationHistory.cass_id == cashier_id).order_by(OperationHistory.data.desc()).limit(20).all()
         return render_template("incasation.html", balances=balances, cashier_number=cashier_id,recent_transactions=recent_transactions)
 
 #Обработчик кнопки купить
@@ -589,6 +589,119 @@ def get_operations_excel():
     # Отправляем файл пользователю для скачивания
     return send_file(filename, as_attachment=True, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
+# Обработка кнопки получить список операций
+@app.route("/get_incasations", methods=["POST"])
+def get_incasations():
+    data = request.get_json()
+    from_date = data.get('fromDate')
+    to_date = data.get('toDate')
+
+    if from_date is None or to_date is None:
+        return jsonify({'success': False, 'message': 'Недостатньо данних для отримання списка оперцій, заповніть всі дані'})
+
+    try:
+        from_date = datetime.strptime(from_date, "%Y-%m-%d")
+        to_date = datetime.strptime(to_date, "%Y-%m-%d")
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Некоректний формат данних про дату'})
+
+    with Session() as db_session:
+        cashier_id = session.get("cashier_id")
+
+        sell_transactions = db_session.query(OperationHistory).filter(
+            OperationHistory.cass_id == cashier_id,
+            OperationHistory.data >= from_date,
+            OperationHistory.data <= to_date + timedelta(days=1)  # Включить операции до конца выбранного дня
+        ).order_by(OperationHistory.data.desc()).all()
+
+        transactions = []
+        for transaction in sell_transactions:
+            transactions.append({
+                "id": transaction.id,
+                "date": transaction.data.strftime("%Y-%m-%d %H:%M:%S"),
+                "cass_id": transaction.cass_id,
+                "currency": transaction.currency,
+                "amount": transaction.amount,
+                "total_amount": transaction.total_amount,
+                "operation_type": transaction.operation_type
+            })
+
+        return jsonify(transactions)
+    
+
+# Функция для создания и сохранения инкасаций в файл Excel
+def save_incasations_to_excel(transactions, filename):
+    # Создаем новую рабочую книгу
+    workbook = Workbook()
+    sheet = workbook.active
+
+    # Задаем заголовки столбцов
+    headers = ["Дата", "Каси", "Тип", "Валюта", "Сума операції", "Ітоговий баланс"]
+    for col_num, header in enumerate(headers, 1):
+        column_letter = get_column_letter(col_num)
+        sheet[f"{column_letter}1"] = header
+        sheet[f"{column_letter}1"].font = Font(bold=True)
+
+    # Заполняем таблицу данными операций
+    for row_num, transaction in enumerate(transactions, 2):
+        sheet[f"A{row_num}"] = transaction["date"]
+        sheet[f"B{row_num}"] = transaction["cass_id"]
+        sheet[f"C{row_num}"] = transaction["operation_type"]
+        sheet[f"D{row_num}"] = transaction["currency"]
+        sheet[f"E{row_num}"] = transaction["amount"]
+        sheet[f"F{row_num}"] = transaction["total_amount"]
+
+    # Сохраняем файл Excel
+    workbook.save(filename)
+
+
+@app.route("/get_incasations_excel", methods=["POST"])
+def get_incasations_excel():
+    # Получаем данные запроса
+    data = request.get_json()
+    from_date = data.get('fromDate')
+    to_date = data.get('toDate')
+
+    if from_date is None or to_date is None:
+        return jsonify({'success': False, 'message': 'Недостатньо данних для отримання списка оперцій, заповніть всі дані'})
+
+    try:
+        from_date = datetime.strptime(from_date, "%Y-%m-%d")
+        to_date = datetime.strptime(to_date, "%Y-%m-%d")
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Некоректний формат данних про дату'})
+
+    with Session() as db_session:
+        cashier_id = session.get("cashier_id")
+
+        sell_transactions = db_session.query(OperationHistory).filter(
+            OperationHistory.cass_id == cashier_id,
+            OperationHistory.data >= from_date,
+            OperationHistory.data <= to_date + timedelta(days=1)  # Включить операции до конца выбранного дня
+        ).order_by(OperationHistory.data.desc()).all()
+
+        transactions = []
+        for transaction in sell_transactions:
+            transactions.append({
+                "id": transaction.id,
+                "date": transaction.data.strftime("%Y-%m-%d %H:%M:%S"),
+                "cass_id": transaction.cass_id,
+                "currency": transaction.currency,
+                "amount": transaction.amount,
+                "total_amount": transaction.total_amount,
+                "operation_type": transaction.operation_type
+            })
+
+    # Создаем имя файла
+    random_numbers = generate_random_string(4)
+    # Создаем временный файл для сохранения операций
+    directory = "C:\\Users\\Anton\\Desktop\\webservice\\temp"
+    # Сохраняем операции в файл Excel
+    filename = os.path.join(directory, f"excel_incasations_{random_numbers}.xlsx")
+    save_incasations_to_excel(transactions, filename)
+
+    # Отправляем файл пользователю для скачивания
+    return send_file(filename, as_attachment=True, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0')

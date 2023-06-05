@@ -2,6 +2,9 @@
 <html>
 <head>
     <title>FinTech</title>
+    <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 </head>
 <body>
     <div class="header">
@@ -49,7 +52,12 @@
         <button value="adding-button" class="green-button">Підкріплення</button>
         <button value="incasation-button" class="red-button">Інкасація</button>
     </div>
-
+    <div class="buttons">
+        <input type="text" id="select-date1">
+        <input type="text" id="select-date2">
+        <button id="get-data">Отримати дані</button>
+        <button id="get-data-excel">Отримати дані в Excel</button>
+    </div>
     <div class="history-table-container" id="history-table-container">
         <h2>Історія Інкасацій/Підкріплень</h2>
         <table class="history-table">

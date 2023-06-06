@@ -2,6 +2,9 @@
 <html>
     <head>
         <title>FinTech</title>
+        <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     </head>
     <body>
         <div class="header">
@@ -17,33 +20,43 @@
             <p class="cashier-number">Каса №<span id="cashier-number">{{ cashier_number }}</span></p>
         </div>
 
-        <table>
-            <thead>
-            <tr>
-                <th>Дата</th>
-                <th>Номер каси</th>
-                <th>Валюта</th>
-                <th>Сума</th>
-                <th>Сума грн</th>
-                <th>Курс</th>
-                <th>Тип операції</th>
-            </tr>
-            </thead>
-            <tbody>
-                {% for transaction in sell_transactions %}
+        <div class="buttons">
+            <input type="text" id="select-date1">
+            <input type="text" id="select-date2">
+            <button id="get-data">Отримати дані</button>
+            <button id="get-data-excel">Отримати дані в Excel</button>
+        </div>
+
+        <div class="table">
+            <h2>Історія Купівлі/Продажу</h2>
+            <table id="history">
+                <thead>
                 <tr>
-                    <td>{{ transaction.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                    <td>{{ transaction.cass_id }}</td>
-                    <td>{{ transaction.currency }}</td>
-                    <td>{{ transaction.amount }}</td>
-                    <td>{{ transaction.total_amount }}</td>
-                    <td>{{ transaction.rate }}</td>
-                    <td>{{ transaction.operation_type }}</td>
+                    <th>Дата</th>
+                    <th>Номер каси</th>
+                    <th>Валюта</th>
+                    <th>Сума</th>
+                    <th>Сума грн</th>
+                    <th>Курс</th>
+                    <th>Тип операції</th>
                 </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        
+                </thead>
+                <tbody>
+                    {% for transaction in sell_transactions %}
+                    <tr>
+                        <td>{{ transaction.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ transaction.cass_id }}</td>
+                        <td>{{ transaction.currency }}</td>
+                        <td>{{ transaction.amount }}</td>
+                        <td>{{ transaction.total_amount }}</td>
+                        <td>{{ transaction.rate }}</td>
+                        <td>{{ transaction.operation_type }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <script src="{{ url_for('static', filename='history.js') }}"></script>
         <link rel="stylesheet" type="text/css" href="static/css/incasation.css">
     </body>
 </html>

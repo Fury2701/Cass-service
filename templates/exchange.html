@@ -89,11 +89,11 @@
           <tr>
               <th>Дата</th>
               <th>Номер каси</th>
+              <th>Тип операції</th>
               <th>Валюта</th>
               <th>Сума</th>
               <th>Сума грн</th>
               <th>Курс</th>
-              <th>Тип операції</th>
               <th>Дії</th>
           </tr>
       </thead>
@@ -102,11 +102,11 @@
           <tr>
               <td>{{ transaction.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
               <td>{{ transaction.cass_id }}</td>
+              <td>{{ transaction.operation_type }}</td>
               <td>{{ transaction.currency }}</td>
               <td>{{ transaction.amount }}</td>
               <td>{{ transaction.total_amount }}</td>
               <td>{{ transaction.rate }}</td>
-              <td>{{ transaction.operation_type }}</td>
               <td>
                 <button class="cancel-btn" data-transaction-id="{{ transaction.id }}">Сторно</button>
               </td>

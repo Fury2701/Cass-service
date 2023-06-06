@@ -11,7 +11,7 @@ const updateSellTransactionsTable = (cashierNumber) => {
       sellTransactionsTable.innerHTML = ""; // очистка таблицы
 
       const headerRow = document.createElement("tr");
-      const headers = ["Дата", "Номер каси", "Валюта", "Сума", "Сума грн", "Курс","Тип операції", "Дії"];
+      const headers = ["Дата", "Номер каси", "Тип операції", "Валюта", "Сума", "Сума грн", "Курс", "Дії"];
       headers.forEach(headerText => {
         const header = document.createElement("th");
         header.textContent = headerText;
@@ -30,6 +30,10 @@ const updateSellTransactionsTable = (cashierNumber) => {
         cassIdCell.textContent = transaction.cass_id;
         row.appendChild(cassIdCell);
 
+        const operationTypeCell = document.createElement("td");
+        operationTypeCell.textContent = transaction.operation_type;
+        row.appendChild(operationTypeCell);
+
         const currencyCell = document.createElement("td");
         currencyCell.textContent = transaction.currency;
         row.appendChild(currencyCell);
@@ -45,10 +49,6 @@ const updateSellTransactionsTable = (cashierNumber) => {
         const ratecell = document.createElement("td");
         ratecell.textContent = transaction.rate.toFixed(1);
         row.appendChild(ratecell);
-
-        const operationTypeCell = document.createElement("td");
-        operationTypeCell.textContent = transaction.operation_type;
-        row.appendChild(operationTypeCell);
 
         const cancelCell = document.createElement("td");
         const cancelButton = document.createElement("button");

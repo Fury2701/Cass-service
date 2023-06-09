@@ -70,11 +70,11 @@ th, td {
 }
 
 #select-date1 {
-    background-color: #2196F3;
+    background-color: #ffffff;
 }
 
 #select-date2 {
-    background-color: #f44336;
+    background-color: #ffffff;
 }
 
 #get-data-excel {
@@ -83,4 +83,28 @@ th, td {
 
 #get-data-excel:hover {
     background-color: #e68a00;
+}
+.print-button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.print-button:hover {
+    background-color: #45a049;
+}
+
+h2 {
+    text-align: center;  
+ }
+.buy-transaction {
+    background-color: rgba(0, 255, 0, 0.4) !important;
+}
+  
+.sell-transaction {
+    background-color: rgba(255, 0, 0, 0.7) !important;
 }

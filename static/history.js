@@ -56,6 +56,13 @@ $(document).ready(function() {
               const operationTypeCell = document.createElement("td");
               operationTypeCell.textContent = transaction.operation_type;
               row.appendChild(operationTypeCell);
+
+                            // Добавление класса к строке в зависимости от значения "Тип операції"
+              if (transaction.operation_type === "Купівля") {
+                    row.classList.add("buy-transaction"); // добавление класса "buy-transaction"
+              } else if (transaction.operation_type === "Продаж") {
+                    row.classList.add("sell-transaction"); // добавление класса "sell-transaction"
+              }
     
               const currencyCell = document.createElement("td");
               currencyCell.textContent = transaction.currency;

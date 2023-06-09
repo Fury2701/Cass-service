@@ -729,6 +729,7 @@ def get_incasations_excel():
     return send_file(filename, as_attachment=True, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 if __name__ == "__main__":
+
     app.run(debug=True, host='0.0.0.0')
 
 #Удачі всім, хто буде розбиратись або підтримувати цей код))

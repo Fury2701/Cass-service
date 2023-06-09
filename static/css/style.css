@@ -43,7 +43,8 @@ button[type=submit]:hover {
 	background-color: #45a049;
 }
 .exchange-container {
-  margin: 0 auto;
+  margin-top: 30px;
+  margin-left: 150px;
   width: 80%;
   max-width: 500px;
   padding: 20px;
@@ -147,26 +148,30 @@ th {
   color: white;
 }
 h2 {
-  margin-left: 80px;
+  margin-left: 70px;
+  padding: 10px;
 }
 .courses-table {
   float: right;
   border-collapse: collapse;
   width: 30%;
-  margin-top: 65px;
-  margin-left: 70px;
+  margin-right: 60px;
+  
   
 }
-.balances-container, .exchange-container {
+.balances-container, .exchange-container, .courses-table {
   display: inline-block;
   vertical-align: top;
 }
 h3 {
-  float: right;
-  margin-left: 40px;
+ text-align: center;
+ padding: 10px;
+ margin-left: 65px;
+ font-size: 1.5em;
 }
-button[type="save"] {
-  margin-top: 300px;
+.savebutton {
+  margin-left: 80px;
+  margin-top: 20px;
   background-color: #0099ff;
   color: #fff;
   float: right;
@@ -189,7 +194,10 @@ button[type="save"] {
   background-color: #cc0000;
 }
 
-#selltransactions-table {
+.selltransactions-table {
+  float: left;
+  margin-left: auto;
+  margin-top: 30px;
   width: 100%;
   border-collapse: collapse;
   
@@ -233,7 +241,7 @@ button[type="save"] {
 .logo {
   color: #c300ff;
   font-weight: 500;
-  font-size: 1.2em;
+  font-size: 1.5em;
 }
 
 .nav-links {
@@ -248,7 +256,7 @@ button[type="save"] {
 .nav-links a {
   text-decoration: none;
   color: #8f8f8f;
-  font-size: 0.75em;
+  font-size: 1.2em;
   transition: color 0.3s;
 }
 
@@ -259,5 +267,63 @@ button[type="save"] {
 
 .cashier-number {
   color: #8f8f8f;
-  font-size: 0.75em;
+  font-size: 1.5em;
+}
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 15% auto;
+  padding: 20px;
+  max-width: 400px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.proceed-button,
+.cancel-button {
+  padding: 10px 20px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.proceed-button:hover,
+.cancel-button:hover {
+  background-color: #0056b3;
+}
+
+input[type="number"] {
+  width: 100%;
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #aeaeae;
+}
+
+p {
+  margin: 10px 0;
+}
+
+span {
+  font-weight: bold;
+}
+.buy-transaction {
+  background-color: rgba(0, 255, 0, 0.4) !important;
+}
+
+.sell-transaction {
+  background-color: rgba(255, 0, 0, 0.7) !important;
 }

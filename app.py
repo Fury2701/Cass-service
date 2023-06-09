@@ -164,6 +164,31 @@ def incasation_page():
         recent_transactions = db_session.query(OperationHistory).filter(OperationHistory.cass_id == cashier_id).order_by(OperationHistory.data.desc()).limit(20).all()
         return render_template("incasation.html", balances=balances, cashier_number=cashier_id,recent_transactions=recent_transactions)
 
+@app.route("/print/<int:transaction_id>", methods=["GET"])
+def print_transaction(transaction_id):
+    cashier_id = session.get("cashier_id")
+    try:
+        transaction_id = int(transaction_id)
+        with Session() as db_session:
+            transaction = (
+                db_session.query(SellTransaction)
+                .filter(SellTransaction.id == transaction_id)
+                .first()
+            )
+            transaction_dict = {
+                'operation_type': transaction.operation_type,
+                'currency': transaction.currency,
+                'amount': transaction.amount,
+                'total_amount': transaction.total_amount,
+                'rate': transaction.rate
+            }
+
+        return render_template("check.html", transaction=transaction_dict, cashier_number=cashier_id)
+    except Exception as e:
+        return "Error formatting check"
+
+
+
 #Обработчик кнопки купить
 @app.route("/buy", methods=["POST"])
 def buy_currency():
@@ -705,3 +730,5 @@ def get_incasations_excel():
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0')
+
+#Удачі всім, хто буде розбиратись або підтримувати цей код))

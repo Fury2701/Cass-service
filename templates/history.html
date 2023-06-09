@@ -21,8 +21,8 @@
         </div>
 
         <div class="buttons">
-            <input type="text" id="select-date1">
-            <input type="text" id="select-date2">
+            <input type="text" id="select-date1" placeholder="З дати">
+            <input type="text" id="select-date2"placeholder="До дати">
             <button id="get-data">Отримати дані</button>
             <button id="get-data-excel">Отримати дані в Excel</button>
         </div>
@@ -39,11 +39,12 @@
                     <th>Сума грн</th>
                     <th>Курс</th>
                     <th>Тип операції</th>
+                    <th>Дії</th>
                 </tr>
                 </thead>
                 <tbody>
                     {% for transaction in sell_transactions %}
-                    <tr>
+                    <tr {% if transaction.operation_type == 'Купівля' %}style="background-color: rgba(0, 255, 0, 0.4);"{% elif transaction.operation_type == 'Продаж' %}style="background-color: rgba(255, 0, 0, 0.7);"{% endif %}>
                         <td>{{ transaction.date.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                         <td>{{ transaction.cass_id }}</td>
                         <td>{{ transaction.currency }}</td>
@@ -51,12 +52,13 @@
                         <td>{{ transaction.total_amount }}</td>
                         <td>{{ transaction.rate }}</td>
                         <td>{{ transaction.operation_type }}</td>
+                        <td><a href="{{ url_for('print_transaction', transaction_id=transaction.id) }}" class="print-button">Друк</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         <script src="{{ url_for('static', filename='history.js') }}"></script>
-        <link rel="stylesheet" type="text/css" href="static/css/incasation.css">
+        <link rel="stylesheet" type="text/css" href="static/css/history.css">
     </body>
 </html>

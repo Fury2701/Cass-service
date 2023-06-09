@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Чек</title>
+    <style>
+        /* Стили для чека */
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .operation-type {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        .data-table th,
+        .data-table td {
+            padding: 5px;
+            border: 1px solid #000;
+        }
+        .data-table th {
+            background-color: #f0f0f0;
+        }
+        .total {
+            text-align: right;
+            font-weight: bold;
+        }
+        .cashier-number{
+            margin-left: 105px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 class="header">ЧЕК З ТОРГІВЛІ ВАЛЮТНИМИ ЦІННОСТЯМИ</h2>
+    <p class="cashier-number">Операційна каса Каса №<span id="cashier-number">{{ cashier_number }}</span></p>
+    <div class="operation-type">
+        {% if transaction.operation_type == 'Купівля' %}
+        Купівля Іноземної Валюти
+        {% elif transaction.operation_type == 'Продаж' %}
+        Продаж Іноземної Валюти
+        {% endif %}
+    </div>
+    <table class="data-table">
+        <tr>
+            <th>Прийнято</th>
+            {% if transaction.operation_type == 'Купівля' %}
+            <td>{{ transaction.currency }}</td>
+            {% elif transaction.operation_type == 'Продаж' %}
+            <td>UAH</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <th>Сума</th>
+            {% if transaction.operation_type == 'Купівля' %}
+            <td>{{ transaction.amount }}</td>
+            {% elif transaction.operation_type == 'Продаж' %}
+            <td>{{ transaction.total_amount }}</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <th>Курс операції</th>
+            <td>{{ transaction.rate }}</td>
+        </tr>
+        <tr>
+            <th>Видано</th>
+            {% if transaction.operation_type == 'Купівля' %}
+            <td>UAH</td>
+            {% elif transaction.operation_type == 'Продаж' %}
+            <td>{{ transaction.currency }}</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <th>Сума виданої валюти</th>
+            {% if transaction.operation_type == 'Купівля' %}
+            <td>{{ transaction.total_amount }}</td>
+            {% elif transaction.operation_type == 'Продаж' %}
+            <td>{{ transaction.amount }}</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <th>Сума заокруглення</th>
+            <td>0.00</td>
+        </tr>
+        <tr>
+            <th>Сума після заокруглення</th>
+            {% if transaction.operation_type == 'Купівля' %}
+            <td>{{ transaction.total_amount }}</td>
+            {% elif transaction.operation_type == 'Продаж' %}
+            <td>{{ transaction.amount }}</td>
+            {% endif %}
+        </tr>
+    </table>
+    
+</div>
+</body>
+</html>

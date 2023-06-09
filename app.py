@@ -581,7 +581,7 @@ def get_operations_excel():
     # Создаем имя файла
     random_numbers = generate_random_string(4)
     # Создаем временный файл для сохранения операций
-    directory = "C:\\Users\\Anton\\Desktop\\webservice\\temp"
+    directory = "C:\\Cass-service\\temp"
     # Сохраняем операции в файл Excel
     filename = os.path.join(directory, f"excel_operations_{random_numbers}.xlsx")
     save_operations_to_excel(transactions, filename)
@@ -695,7 +695,7 @@ def get_incasations_excel():
     # Создаем имя файла
     random_numbers = generate_random_string(4)
     # Создаем временный файл для сохранения операций
-    directory = "C:\\Users\\Anton\\Desktop\\webservice\\temp"
+    directory = "C:\\Cass-service\\temp"
     # Сохраняем операции в файл Excel
     filename = os.path.join(directory, f"excel_incasations_{random_numbers}.xlsx")
     save_incasations_to_excel(transactions, filename)

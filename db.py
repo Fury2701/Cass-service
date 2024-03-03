@@ -5,10 +5,13 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
 import secrets, tempfile, random, string, os
+from collections import defaultdict
+import json
 
 app = Flask(__name__)
 
@@ -26,6 +29,7 @@ class User(Base):
     login = Column(String(255), nullable=False)
     cass_id = Column(Integer, nullable=False)
     password = Column(String(255), nullable=False)
+    permissions = Column(Integer, nullable=False)
 
     balances = relationship("Balance", back_populates="user")
     courses = relationship("Course", back_populates="user")

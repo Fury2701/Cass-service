@@ -21,6 +21,295 @@ def check_login():
         else:
             return "Пароль або логін введено невірно"
 
+@app.route("/adm", methods=["GET"])
+def adm_log():
+    return render_template("loginadm.html")
+
+# Функция проверки логина
+@app.route("/admin", methods=["POST"])
+def admin_login():
+    login = request.form["login"]
+    password = request.form["password"]
+    with Session() as db_session:  
+        cashier = db_session.query(User).filter(User.login == login, User.password == password, User.permissions==1).first()
+        if cashier:
+            # Сохранение данных в сессии
+            session["login"] = login
+            session["password"] = password
+            session["premission"] = cashier.permissions
+            return redirect(url_for("admin_page"))
+        else:
+            return "Пароль або логін введено невірно"
+
+@app.route("/adm-panel",methods=['GET'])
+def admin_page():
+    benefit_value=benefit()
+    num_oper=num_operations()
+    buy_rate, sell_rate = mid_rate()
+
+    return render_template("adm-panel.html",benefit=benefit_value, num_operations=num_oper, buyrate=buy_rate, sellrate= sell_rate)
+
+@app.route("/users", methods=['GET'])
+def users_adm():
+    data_user = users_data()
+    print(data_user)
+    return render_template("users-adm.html", data_user = data_user)
+
+@app.route("/allinfo", methods=['GET'])
+def allinfo_adm():
+
+    return render_template("allinfo-adm.html")
+
+
+def users_data():
+    try:
+        with Session() as db_session:
+            data = db_session.query(User).all()
+
+            user_info = []
+            for transaction in data:
+                if transaction.permissions == 1:
+                    role = "Адміністратор"
+                    cass_id = "-"
+                else:
+                    role = "Касир"
+                    cass_id = transaction.cass_id
+
+                data_user = {
+                    "id": transaction.id,
+                    "cass_id": cass_id,
+                    "login": transaction.login,
+                    "password": transaction.password,
+                    "permissions": role
+                }
+                user_info.append(data_user)
+        return user_info
+
+    except Exception as e:
+        return "Помилка формування даних про користувачів"
+
+
+
+@app.route('/graf-data', methods=['POST'])
+def process_data():
+    # Отримуємо дані з запиту
+    data = request.get_json()
+
+    # Викликаємо функції для обробки даних та отримання результатів
+    benefit_data = benefit_by_day(data['fromDate'], data['toDate'])
+    operations_data = operations_by_day(data['fromDate'], data['toDate'])
+
+    # Об'єднуємо дані про прибуток та кількість операцій в один об'єкт
+    result_data = {
+        "profit": benefit_data,
+        "operations": operations_data
+    }
+
+    # Повертаємо дані у форматі JSON
+    return jsonify(result_data)
+
+@app.route('/adm-data', methods=['POST'])
+def adm_data():
+    # Отримуємо дані з запиту
+    data = request.get_json()
+
+    # Викликаємо функції для обробки даних та отримання результатів
+    benefit_data = benefit(data['fromDate'], data['toDate'])
+    operations_data = num_operations(data['fromDate'], data['toDate'])
+    buy_rate_data, sell_rate_data = mid_rate(data['fromDate'], data['toDate'])
+    # Об'єднуємо дані про прибуток та кількість операцій в один об'єкт
+    result_data = {
+        "profit": benefit_data,
+        "operations": operations_data,
+        "buy_rate": buy_rate_data,
+        "sell_rate": sell_rate_data
+    }
+
+    # Повертаємо дані у форматі JSON
+    return jsonify(result_data)
+
+@app.route("/graf", methods=['GET'])
+def diagrams_page():
+
+    daily_profit=benefit_by_day()
+    daily_operations=operations_by_day()
+
+    return render_template("graf.html", daily_profit=daily_profit, daily_operations=daily_operations)
+
+def benefit_by_day(start_date=None, end_date=None):
+    if start_date is None:
+        start_date = datetime.now() - relativedelta(months=1)
+    if end_date is None:
+        end_date = datetime.now()
+
+    data = stat(start_date, end_date)
+    daily_profit = []
+
+    for transaction in data:
+        date_key = transaction.date.strftime('%Y-%m-%d')
+        profit = 0
+        num_operations = 0
+        if transaction.operation_type == 'Продаж':
+            profit += transaction.total_amount
+            num_operations += 1
+        elif transaction.operation_type == 'Купівля':
+            profit -= transaction.total_amount
+            num_operations += 1
+
+        daily_profit.append((date_key, profit, num_operations))
+
+    return daily_profit
+
+def operations_by_day(start_date=None, end_date=None):
+    if start_date is None:
+        start_date = datetime.now() - relativedelta(months=1)
+    if end_date is None:
+        end_date = datetime.now()
+
+    data = stat(start_date, end_date)
+    daily_operations = defaultdict(int)
+
+    for transaction in data:
+        date_key = transaction.date.strftime('%Y-%m-%d')
+        daily_operations[date_key] += 1
+
+    return daily_operations
+
+def num_operations(start_date=None, end_date=None):
+    try: 
+        # Встановлення значень за замовчуванням, якщо дати не передані
+        if start_date is None:
+            start_date = datetime.now() - relativedelta(months=1)  # Попередній місяць
+        if end_date is None:
+            end_date = datetime.now()
+        
+        data = stat(start_date, end_date)  # Отримання даних з бази даних
+        num_operations = len(data)  # Кількість операцій
+
+        return num_operations
+        
+    except Exception as e: 
+        return "Помилка формування"
+
+def mid_rate(start_date=None, end_date=None):
+    if start_date is None:
+        start_date = datetime.now() - relativedelta(months=1)
+    if end_date is None:
+        end_date= datetime.now()
+    
+    jsn_data_list = []
+    total_buycurrency = 0  # Ініціалізуємо змінну total_currency
+    total_buyuah = 0  # Ініціалізуємо змінну total_uah
+
+    data = stat(start_date, end_date)
+            
+    try:
+        for transaction in data:
+            jsn_data = {
+                "id": transaction.id,
+                "date":transaction.date.strftime('%Y-%m-%d %H:%M:%S'),
+                "cass_id":transaction.cass_id,
+                "currency":transaction.currency,
+                "amoutn":transaction.amount,
+                "total_amount":transaction.total_amount,
+                "operation_type":transaction.operation_type,
+                "rate":transaction.rate
+            }
+            jsn_data_list.append(jsn_data)
+    except Exception as e:
+        return "Помилка формування"
+        
+
+    total_selluah=0
+    total_sellcurrency=0
+
+    for transaction in data:
+        if transaction.operation_type == "Купівля":
+            total_buycurrency += transaction.amount
+            total_buyuah += transaction.total_amount
+        elif transaction.operation_type == "Продаж":
+            total_sellcurrency += transaction.amount
+            total_selluah += transaction.total_amount
+
+
+        # Перевіряємо, чи не дорівнює total_buycurrency нулю перед обчисленням
+    if total_buycurrency != 0:
+        total_buyrate = total_buyuah / total_buycurrency
+    else:
+        total_buyrate = 0
+
+    # Перевіряємо, чи не дорівнює total_sellcurrency нулю перед обчисленням
+    if total_sellcurrency != 0:
+        total_sellrate = total_selluah / total_sellcurrency
+    else:
+        total_sellrate = 0
+
+    mid_sellrate = "{:,.2f}".format(total_sellrate)
+    mid_buyrate = "{:,.2f}".format(total_buyrate)
+
+
+
+    return mid_buyrate, mid_sellrate
+
+def benefit(start_date=None, end_date=None):
+    # Встановлення значень за замовчуванням, якщо дати не передані
+    if start_date is None:
+        start_date = datetime.now() - relativedelta(months=1)  # Попередній місяць
+    if end_date is None:
+        end_date = datetime.now()
+
+    data = stat(start_date, end_date)  # Отримання даних з бази даних
+    jsn_data_list = []
+    total_profit = 0
+    try:
+        for transaction in data:
+            jsn_data = {
+                "id": transaction.id,
+                "date": transaction.date.strftime('%Y-%m-%d %H:%M:%S'),
+                "cass_id": transaction.cass_id,
+                "currency": transaction.currency,
+                "amount": transaction.amount,
+                "total_amount": transaction.total_amount,
+                "operation_type": transaction.operation_type,
+                "rate": transaction.rate
+            }
+            jsn_data_list.append(jsn_data)  # Додавання jsn_data в jsn_data_list
+
+    except Exception as e:
+        return "Помилка формування"
+
+    # Розрахунок прибутку
+    for transaction in data:
+        if transaction.operation_type == 'Продаж':
+            total_profit += transaction.total_amount
+        elif transaction.operation_type == 'Купівля':
+            total_profit -= transaction.total_amount
+
+    formatted_profit = "{:,.2f}".format(total_profit)
+
+    return formatted_profit
+
+    
+def stat(start_date=None, end_date=None):
+    try: 
+        # Визначаємо дату за місяць назад від поточної дати, якщо аргументи не передані
+        if start_date is None:
+            start_date = datetime.now() - relativedelta(months=1)
+        if end_date is None:
+            end_date = datetime.now()
+        
+        with Session() as db_session:
+            # Фільтруємо операції за переданим часовим проміжком
+            data = db_session.query(SellTransaction).filter(
+                SellTransaction.date >= start_date,
+                SellTransaction.date <= end_date
+            ).all()
+        
+        return data
+        
+    except Exception as e: 
+        return "помилка формування статистики: " + str(e)
+
 @app.route("/logout")
 def logout():
     # Очистка данных сессии
@@ -730,5 +1019,6 @@ def get_incasations_excel():
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0')
+
 
 #Удачі всім, хто буде розбиратись або підтримувати цей код))

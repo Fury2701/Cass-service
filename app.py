@@ -1,5 +1,14 @@
 from db import *
 
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('login') and session.get('premission') == 1 and session.get('password'):
+            return f(*args, **kwargs)
+        else:
+            return redirect(url_for('adm_log'))  # Перенаправити на сторінку входу
+    return decorated_function
+
 # Отображение страницы входа
 @app.route("/")
 def login():
@@ -42,6 +51,7 @@ def admin_login():
             return "Пароль або логін введено невірно"
 
 @app.route("/adm-panel",methods=['GET'])
+@admin_required
 def admin_page():
     benefit_value=benefit()
     num_oper=num_operations()
@@ -51,12 +61,14 @@ def admin_page():
     return render_template("adm-panel.html",benefit=benefit_value, num_operations=num_oper, buyrate=buy_rate, sellrate= sell_rate, cass=cass)
 
 @app.route("/users", methods=['GET'])
+@admin_required
 def users_adm():
     data_user = users_data()
     print(data_user)
     return render_template("users-adm.html", data_user = data_user)
 
 @app.route("/allinfo", methods=['GET'])
+@admin_required
 def allinfo_adm():
 
     cass = cass_info()
@@ -268,6 +280,7 @@ def adm_data():
     return jsonify(result_data)
 
 @app.route("/graf", methods=['GET'])
+@admin_required
 def diagrams_page():
 
     daily_profit=benefit_by_day()
@@ -467,6 +480,11 @@ def stat(cass_id=None, start_date=None, end_date=None):
     except Exception as e: 
         return "помилка формування статистики: " + str(e)
 
+@app.route("/logout-admin")
+def logout_admin():
+    # Очистка данных сессии
+    session.clear()
+    return redirect(url_for("adm_log"))
 
 @app.route("/logout")
 def logout():

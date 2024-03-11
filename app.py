@@ -58,7 +58,139 @@ def users_adm():
 @app.route("/allinfo", methods=['GET'])
 def allinfo_adm():
 
-    return render_template("allinfo-adm.html")
+    cass = cass_info()
+
+    return render_template("allinfo-adm.html", cass=cass)
+
+@app.route("/operinfo", methods=['POST'])
+def oper_info():
+    data_info= request.get_json()
+    cass_id = data_info['cass_id']
+    from_date = data_info['from_date']
+    to_date = data_info['to_date']
+    data = data_oper_info(cass_id, from_date, to_date)
+    print (data)
+
+    return jsonify(data)
+
+@app.route("/edituser", methods=['POST'])
+def edit_data():
+    user_info = request.get_json()
+    old_login = user_info['old_login'] # Старий логін
+    new_login = user_info['new_login'] # Новий логін
+    password = user_info['password'] # Пароль
+    permissions = user_info['permissions'] # Рівень доступу
+    
+
+    try:
+        with Session() as db_session:
+            # Знаходимо користувача за старим логіном
+            user = db_session.query(User).filter(User.login == old_login).first()
+            
+            # Оновлюємо дані користувача
+            if user:
+                user.login = new_login # Оновлюємо логін
+                user.password = password # Оновлюємо пароль
+                user.permissions = permissions # Оновлюємо рівень доступу
+                db_session.commit()
+                return "Дані користувача оновлено успішно!"
+            else:
+                return "Користувача з таким логіном не знайдено"
+    except Exception as e:
+        return str(e)
+
+@app.route("/edit_user", methods=['GET'])
+def edit_user():
+    login = request.args.get('login')  # Отримуємо логін користувача з параметру запиту
+    user_data = edit_user_data(login)
+    print(user_data)
+
+    return user_data
+
+def data_oper_info(cass_id, from_date, to_date):
+    try: 
+        from_date = datetime.strptime(from_date, "%Y-%m-%d")  # Перетворення рядка у datetime
+        to_date = datetime.strptime(to_date, "%Y-%m-%d")  # Перетворення рядка у datetime
+        
+        with Session() as db_session:
+            # Фільтруємо операції за переданим часовим проміжком
+            data = db_session.query(SellTransaction).filter(
+                SellTransaction.cass_id == cass_id,
+                SellTransaction.date >= from_date,
+                SellTransaction.date <= to_date + timedelta(days=1)  # Включить операции до конца выбранного дня
+            ).order_by(SellTransaction.date.desc()).all()
+
+            transactions = []
+            for transaction in data:
+                transactions.append({
+                    "id": transaction.id,
+                    "date": transaction.date.strftime("%Y-%m-%d %H:%M:%S"),
+                    "cass_id": transaction.cass_id,
+                    "currency": transaction.currency,
+                    "amount": transaction.amount,
+                    "rate": transaction.rate,
+                    "total_amount": transaction.total_amount,
+                    "operation_type": transaction.operation_type
+                })
+        
+        return transactions
+    except Exception as e:
+        return "Помилка отримання даних про операції"
+
+def cass_info():
+    level_perm=0
+
+    try:
+        with Session() as db_session:
+            data= db_session.query(User).filter(User.permissions == level_perm).all()
+            
+            return [cass.cass_id for cass in data]
+
+    except Exception as e:
+        return "Помилка отримання списку кас"
+
+def edit_user_data(login):
+    try:
+        with Session() as db_session:
+            # Отримуємо дані користувача за логіном
+            user = db_session.query(User).filter(User.login == login).first()
+
+            # Перевіряємо, чи користувач знайдений
+            if user:
+                if user.permissions == 1:  # Якщо permissions = 1 (адміністратор)
+                    # Формуємо дані про користувача як адміністратора
+                    user_info = {
+                        "login": user.login,
+                        "password": user.password,
+                        "access": "Адміністратор"
+                    }
+                elif user.permissions == 0:  # Якщо permissions = 0 (касир)
+                    # Отримуємо дані каси за її номером
+                    cash_register = db_session.query(Balance).filter(Balance.cass_id == user.cass_id).all()
+
+                    # Формуємо дані про касу
+                    cash_info = {
+                        "cass_id": user.cass_id,
+                        "login": user.login,
+                        "password": user.password,
+                        "access": "Каса"
+                    }
+                    # Додаємо дані про валюти, які використовуються на цій касі
+                    currencies = [balance.currency for balance in cash_register]
+                    cash_info["currencies"] = currencies
+
+                    user_info = cash_info
+
+                else:
+                    user_info = None
+            else:
+                user_info = None
+
+    except Exception as e:
+        # Обробляємо помилку
+        return "Помилка отримання даних користувача"
+
+    return user_info
 
 
 def users_data():
@@ -72,7 +204,7 @@ def users_data():
                     role = "Адміністратор"
                     cass_id = "-"
                 else:
-                    role = "Касир"
+                    role = "Каса"
                     cass_id = transaction.cass_id
 
                 data_user = {

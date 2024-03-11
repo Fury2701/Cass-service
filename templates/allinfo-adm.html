@@ -7,34 +7,120 @@
       <!-- Bootstrap CSS -->
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
       <link rel="stylesheet" type="text/css" href="static/css/adm-panel.css">
+      <link rel="stylesheet" type="text/css" href="static/css/allinfo.css">
       <title>Admin</title>
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light gradientfin-bg">
-        <div class="container-fluid" id="navtext">
-            <a class="navbar-brand fontweight fw-bold" href="/adm-panel" style="color: #fff;">Фінанси</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link active fontweight fw-bold" aria-current="page" href="/graf" style="color: #fff;">Графіки</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link fontweight fw-bold" href="/users" style="color: #fff;">Користувачі</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link fontweight fw-bold" href="/allinfo" style="color: #fff;">Історія</a>
-                    </li>
-                </ul>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light gradientfin-bg">
+            <div class="container-fluid" id="navtext" style = "margin-left: 37%;">
+                <a class="navbar-brand fontweight fw-bold" href="/adm-panel" style="color: #fff;">Фінанси</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link active fontweight fw-bold" aria-current="page" href="/graf" style="color: #fff;">Графіки</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fontweight fw-bold" href="/users" style="color: #fff;">Користувачі</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link fontweight fw-bold" href="/allinfo" style="color: #fff;">Історія</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
+        </nav>
+        <div class="buttons">
+            <input type="text" id="select-date1" placeholder="З дати">
+            <input type="text" id="select-date2"placeholder="До дати">
+            <button id="get-data">Отримати дані</button>
         </div>
-    </nav>
-    <div class="tab">
+        <div class="sel">
+            <label for="info">Номер каси:</label>
+            <select class="cass" name="cass" id="cass">
+                {% for cass_id in cass %}
+                    <option value="{{ cass_id }}">{{ cass_id }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="tab">
+            <table class="table table-striped mt-5" style="max-width: 95%;">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">№ Каси</th>
+                        <th scope="col">Тип</th>
+                        <th scope="col">Валюта</th>
+                        <th scope="col">Сума в грн</th>
+                        <th scope="col">Сума валюті</th>
+                        <th scope="col">Дата операції</th>
+                    </tr>
+                </thead>
+                <tbody class="table-body">
+                </tbody>
+            </table>
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-center">
+                </ul>
+            </nav>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+        <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+        <script src="{{ url_for('static', filename='allinfo.js') }}"></script>
+        <script>
+            $(document).ready(function() {
+                $('#get-data').click(function() {
+                    var cass_id = $('#cass').val();
+                    var from_date = $('#select-date1').val();
+                    var to_date = $('#select-date2').val();
 
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-    <script src="{{ url_for('static', filename='allinfo.js') }}"></script>
+                    $.ajax({
+                        type: 'POST',
+                        url: '/operinfo',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ 'cass_id': cass_id, 'from_date': from_date, 'to_date': to_date}),
+                        success: function(data) {
+                            // Очистити таблицю перед оновленням
+                            $('.table-body').empty();
+                            // Додати нові дані до таблиці
+                            var perPage = 20; // Кількість записів на сторінці
+                            var pageCount = Math.ceil(data.length / perPage); // Кількість сторінок
+                            var currentPage = 1; // Поточна сторінка
+
+                            displayData(currentPage);
+
+                            function displayData(page) {
+                                $('.table-body').empty();
+                                var start = (page - 1) * perPage;
+                                var end = start + perPage;
+                                $.each(data.slice(start, end), function(index, item) {
+                                    $('.table-body').append('<tr><td>' + item.id + '</td><td>' + item.cass_id + '</td><td>' + item.operation_type + '</td><td>' + item.currency + '</td><td>' + item.amount + '</td><td>' + item.total_amount + '</td><td>' + item.date + '</td></tr>');
+                                });
+                            }
+
+                            // Створення посилань для кожної сторінки
+                            var pagination = '';
+                            for (var i = 1; i <= pageCount; i++) {
+                                pagination += '<li class="page-item"><a class="page-link" href="#" data-page="' + i + '">' + i + '</a></li>';
+                            }
+                            $('.pagination').html(pagination);
+
+                            // Показати дані на вибраній сторінці при кліку на посилання сторінки
+                            $('.page-link').click(function() {
+                                currentPage = $(this).data('page');
+                                displayData(currentPage);
+                            });
+                        },
+                        error: function(xhr, status, error) {
+                            console.error(xhr.responseText);
+                        }
+                    });
+                });
+            });
+        </script>
   </body>
 </html>

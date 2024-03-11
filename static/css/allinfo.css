@@ -1,0 +1,13 @@
+.tab{
+    margin-left: 5%;
+}
+
+.sel {
+    font-size: 20px;
+    margin-top: 2%;
+    margin-left: 5%;
+}
+.cass {
+    padding: 10px 10px; /* відступи (потрібно вказати вертикальний та горизонтальний відступи окремо) */ 
+    border-radius: 4px; /* радіус закруглення кутів */ 
+}

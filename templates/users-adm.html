@@ -12,7 +12,7 @@
   </head>
   <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light gradientfin-bg">
-        <div class="container-fluid" id="navtext">
+        <div class="container-fluid" id="navtext" style = "margin-left: 37%;">
             <a class="navbar-brand fontweight fw-bold" href="/adm-panel" style="color: #fff;">Фінанси</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -32,6 +32,33 @@
             </div>
         </div>
     </nav>
+    <div class="modal" tabindex="-1" id="userInfoModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="userAccess"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Рівень доступу:</strong>
+                        <select id="userselectAccess">
+                            <option value="Каса">Каса</option>
+                            <option value="Адміністратор">Адміністратор</option>
+                        </select>
+                    </p>
+                    <p><strong>Логін:</strong> <span id="userLoginhide" style="border: 0.5px solid #ced4da; padding: 4px; border-radius: 5px; background-color: rgba(193, 226, 255, 0.771);"></span></p>
+                    <p><strong>Логін:</strong> <span id="userLogin" contenteditable="true" style="border: 0.5px solid #ced4da; padding: 4px; border-radius: 5px; background-color: rgba(193, 226, 255, 0.771);"></span></p>
+                    <p><strong>Пароль:</strong> <span id="userPassword" contenteditable="true" style="border: 1px solid #ced4da; padding: 4px; border-radius: 5px;"></span></p>
+                    <p><strong>Номер каси:</strong> <span id="userCassId" contenteditable="true" style="border: 1px solid #ced4da; padding: 4px; border-radius: 5px;"></span></p>
+                    <p><strong>Валюти:</strong> <span id="userCurrencies"  style="border: 1px solid #ced4da; padding: 4px; border-radius: 5px;"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                    <button type="button" class="btn btn-primary"  id="saveChangesBtn" onclick="saveChanges()">Зберегти зміни</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="tab">
         <table class="table mt-5" style="max-width: 95%;">
             <thead>
@@ -52,12 +79,88 @@
                             <td>{{ user.cass_id }}</td>
                             <td>{{ user.login }}</td>
                             <td>{{ user.password }}</td>
-                            <td><a href="#" class="change-button">Редагувати</a></td>
+                            <td><button class="btn btn-primary" onclick="editUser('{{ user.login }}')">Редагувати</button></td>
                         </tr>
                     {% endfor %}
                 </tbody>
         </table>  
     </div> 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script>
+        function editUser(login) {
+            $.ajax({
+                type: 'GET',
+                url: '/edit_user?login=' + login,
+                success: function(user_info) {
+                    $('#userAccess').text(user_info.access);
+                    $('#userselectAccess').val(user_info.access);
+                    $('#userLogin').text(user_info.login);
+                    $('#userLoginhide').text(user_info.login);
+                    $('#userPassword').text(user_info.password);
+
+                    // Перевірка, чи є користувач адміністратором
+                    if (user_info.access === "Адміністратор") {
+                        $('#userLoginhide').parent().hide();
+                        $('#userCassId').parent().hide(); // Приховати номер каси
+                        $('#userCurrencies').parent().hide(); // Приховати валюти
+                    } else {
+                        $('#userLoginhide').parent().hide();
+                        $('#userCassId').text(user_info.cass_id);
+                        $('#userCurrencies').text(user_info.currencies.join(', '));
+                        $('#userCurrencies').parent().show();
+                    }
+
+                    // Відкриття модального вікна
+                    $('#userInfoModal').modal('show');
+
+                    // Додавання обробників подій для збереження змін
+                    $('.btn-primary').off('click'); // Видаляє попередні обробники подій
+                    $('.btn-primary').on('click', function() {
+                        // Збереження введених даних
+                        user_info.cass_id = $('#userCassId').text();
+                        user_info.currencies = $('#userCurrencies').text().split(',').map(s => s.trim());
+                        // Тут ви можете відправити user_info на сервер для збереження
+                        console.log('Збережено зміни:', user_info);
+                        // Закриття модального вікна
+                        $('#userInfoModal').modal('hide');
+                    });
+                },
+                error: function(error) {
+                    // Обробка помилки
+                    console.log(error);
+                }
+            });
+        }
+        function saveChanges() {
+            // Отримання даних з модального вікна
+            var user_info = {
+                old_login: $('#userLoginhide').text(),
+                new_login: $('#userLogin').text(),
+                password: $('#userPassword').text(),
+                permissions: $('#userselectAccess').val() === 'Каса' ? 0 : 1
+            };
+            
+            // Відправка даних на сервер методом POST
+            $.ajax({
+                type: 'POST',
+                url: '/edituser',
+                contentType: 'application/json',
+                data: JSON.stringify(user_info),
+                success: function(response) {
+                    // Виведення повідомлення про успішне оновлення даних
+                    alert(response);
+                    // Закриття модального вікна
+                    $('#userInfoModal').modal('hide');
+                },
+                error: function(error) {
+                    // Виведення повідомлення про помилку
+                    alert('Помилка оновлення даних: ' + error);
+                }
+            });
+        }
+    </script>  
   </body>
 </html>

@@ -36,6 +36,15 @@
         <input type="text" id="select-date2"placeholder="До дати">
         <button id="get-data">Отримати дані</button>
     </div>
+    <div class="sel">
+        <label for="info">Номер каси:</label>
+        <select class="cass" name="cass" id="cass">
+            <option value="all">Всі</option>
+            {% for cass_id in cass %}
+                <option value="{{ cass_id }}">{{ cass_id }}</option>
+            {% endfor %}
+        </select>
+    </div>  
     <div class="container mt-5" style="max-width: 40%;">
         <div class="row justify-content-center">
             <div class="col-md-6 text-center">

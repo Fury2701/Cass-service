@@ -14,6 +14,7 @@ $(document).ready(function() {
     });
   
     $("#get-data").click(function() {
+        var cass_id = $('#cass').val();
         var fromDate = $("#select-date1").val();
         var toDate = $("#select-date2").val();
       
@@ -23,6 +24,7 @@ $(document).ready(function() {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
+                cass_id: cass_id,
                 fromDate: fromDate,
                 toDate: toDate,
             }),

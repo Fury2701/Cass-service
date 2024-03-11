@@ -46,8 +46,9 @@ def admin_page():
     benefit_value=benefit()
     num_oper=num_operations()
     buy_rate, sell_rate = mid_rate()
+    cass = cass_info()
 
-    return render_template("adm-panel.html",benefit=benefit_value, num_operations=num_oper, buyrate=buy_rate, sellrate= sell_rate)
+    return render_template("adm-panel.html",benefit=benefit_value, num_operations=num_oper, buyrate=buy_rate, sellrate= sell_rate, cass=cass)
 
 @app.route("/users", methods=['GET'])
 def users_adm():
@@ -113,12 +114,17 @@ def data_oper_info(cass_id, from_date, to_date):
         to_date = datetime.strptime(to_date, "%Y-%m-%d")  # Перетворення рядка у datetime
         
         with Session() as db_session:
-            # Фільтруємо операції за переданим часовим проміжком
-            data = db_session.query(SellTransaction).filter(
-                SellTransaction.cass_id == cass_id,
-                SellTransaction.date >= from_date,
-                SellTransaction.date <= to_date + timedelta(days=1)  # Включить операции до конца выбранного дня
-            ).order_by(SellTransaction.date.desc()).all()
+            if cass_id == "all":  # Якщо cass_id = "all", витягуємо дані для всіх кас
+                data = db_session.query(SellTransaction).filter(
+                    SellTransaction.date >= from_date,
+                    SellTransaction.date <= to_date + timedelta(days=1)  # Включить операції до кінця вибраного дня
+                ).order_by(SellTransaction.date.desc()).all()
+            else:  # В іншому випадку, витягуємо дані тільки для конкретної каси
+                data = db_session.query(SellTransaction).filter(
+                    SellTransaction.cass_id == cass_id,
+                    SellTransaction.date >= from_date,
+                    SellTransaction.date <= to_date + timedelta(days=1)  # Включить операції до кінця вибраного дня
+                ).order_by(SellTransaction.date.desc()).all()
 
             transactions = []
             for transaction in data:
@@ -136,6 +142,7 @@ def data_oper_info(cass_id, from_date, to_date):
         return transactions
     except Exception as e:
         return "Помилка отримання даних про операції"
+
 
 def cass_info():
     level_perm=0
@@ -228,8 +235,8 @@ def process_data():
     data = request.get_json()
 
     # Викликаємо функції для обробки даних та отримання результатів
-    benefit_data = benefit_by_day(data['fromDate'], data['toDate'])
-    operations_data = operations_by_day(data['fromDate'], data['toDate'])
+    benefit_data = benefit_by_day(data['cass_id'],data['fromDate'], data['toDate'])
+    operations_data = operations_by_day(data['cass_id'],data['fromDate'], data['toDate'])
 
     # Об'єднуємо дані про прибуток та кількість операцій в один об'єкт
     result_data = {
@@ -246,9 +253,9 @@ def adm_data():
     data = request.get_json()
 
     # Викликаємо функції для обробки даних та отримання результатів
-    benefit_data = benefit(data['fromDate'], data['toDate'])
-    operations_data = num_operations(data['fromDate'], data['toDate'])
-    buy_rate_data, sell_rate_data = mid_rate(data['fromDate'], data['toDate'])
+    benefit_data = benefit(data['cass_id'],data['fromDate'], data['toDate'])
+    operations_data = num_operations(data['cass_id'],data['fromDate'], data['toDate'])
+    buy_rate_data, sell_rate_data = mid_rate(data['cass_id'],data['fromDate'], data['toDate'])
     # Об'єднуємо дані про прибуток та кількість операцій в один об'єкт
     result_data = {
         "profit": benefit_data,
@@ -265,16 +272,19 @@ def diagrams_page():
 
     daily_profit=benefit_by_day()
     daily_operations=operations_by_day()
+    cass = cass_info()
 
-    return render_template("graf.html", daily_profit=daily_profit, daily_operations=daily_operations)
+    return render_template("graf.html", daily_profit=daily_profit, daily_operations=daily_operations, cass=cass)
 
-def benefit_by_day(start_date=None, end_date=None):
+def benefit_by_day(cass_id=None ,start_date=None, end_date=None):
+    if cass_id is None:
+        cass_id = "all"
     if start_date is None:
         start_date = datetime.now() - relativedelta(months=1)
     if end_date is None:
         end_date = datetime.now()
 
-    data = stat(start_date, end_date)
+    data = stat(cass_id, start_date, end_date)
     daily_profit = []
 
     for transaction in data:
@@ -292,13 +302,15 @@ def benefit_by_day(start_date=None, end_date=None):
 
     return daily_profit
 
-def operations_by_day(start_date=None, end_date=None):
+def operations_by_day(cass_id=None, start_date=None, end_date=None):
+    if cass_id is None:
+        cass_id = "all"
     if start_date is None:
         start_date = datetime.now() - relativedelta(months=1)
     if end_date is None:
         end_date = datetime.now()
 
-    data = stat(start_date, end_date)
+    data = stat(cass_id, start_date, end_date)
     daily_operations = defaultdict(int)
 
     for transaction in data:
@@ -307,7 +319,7 @@ def operations_by_day(start_date=None, end_date=None):
 
     return daily_operations
 
-def num_operations(start_date=None, end_date=None):
+def num_operations(cass_id=None, start_date=None, end_date=None):
     try: 
         # Встановлення значень за замовчуванням, якщо дати не передані
         if start_date is None:
@@ -315,7 +327,7 @@ def num_operations(start_date=None, end_date=None):
         if end_date is None:
             end_date = datetime.now()
         
-        data = stat(start_date, end_date)  # Отримання даних з бази даних
+        data = stat(cass_id, start_date, end_date)  # Отримання даних з бази даних
         num_operations = len(data)  # Кількість операцій
 
         return num_operations
@@ -323,7 +335,9 @@ def num_operations(start_date=None, end_date=None):
     except Exception as e: 
         return "Помилка формування"
 
-def mid_rate(start_date=None, end_date=None):
+def mid_rate(cass_id=None, start_date=None, end_date=None):
+    if cass_id is None:
+        cass_id = "all"
     if start_date is None:
         start_date = datetime.now() - relativedelta(months=1)
     if end_date is None:
@@ -333,7 +347,7 @@ def mid_rate(start_date=None, end_date=None):
     total_buycurrency = 0  # Ініціалізуємо змінну total_currency
     total_buyuah = 0  # Ініціалізуємо змінну total_uah
 
-    data = stat(start_date, end_date)
+    data = stat(cass_id, start_date, end_date)
             
     try:
         for transaction in data:
@@ -383,14 +397,16 @@ def mid_rate(start_date=None, end_date=None):
 
     return mid_buyrate, mid_sellrate
 
-def benefit(start_date=None, end_date=None):
+def benefit(cass_id=None, start_date=None, end_date=None):
     # Встановлення значень за замовчуванням, якщо дати не передані
+    if cass_id is None:
+        cass_id = "all"
     if start_date is None:
         start_date = datetime.now() - relativedelta(months=1)  # Попередній місяць
     if end_date is None:
         end_date = datetime.now()
 
-    data = stat(start_date, end_date)  # Отримання даних з бази даних
+    data = stat(cass_id, start_date, end_date)  # Отримання даних з бази даних
     jsn_data_list = []
     total_profit = 0
     try:
@@ -422,25 +438,35 @@ def benefit(start_date=None, end_date=None):
     return formatted_profit
 
     
-def stat(start_date=None, end_date=None):
+def stat(cass_id=None, start_date=None, end_date=None):
     try: 
         # Визначаємо дату за місяць назад від поточної дати, якщо аргументи не передані
+        if cass_id is None:
+            cass_id = "all"
         if start_date is None:
             start_date = datetime.now() - relativedelta(months=1)
         if end_date is None:
             end_date = datetime.now()
         
         with Session() as db_session:
-            # Фільтруємо операції за переданим часовим проміжком
-            data = db_session.query(SellTransaction).filter(
-                SellTransaction.date >= start_date,
-                SellTransaction.date <= end_date
-            ).all()
+            # Фільтруємо операції за переданим часовим проміжком та номером каси (якщо вказано)
+            if cass_id == "all":
+                data = db_session.query(SellTransaction).filter(
+                    SellTransaction.date >= start_date,
+                    SellTransaction.date <= end_date
+                ).all()
+            else:
+                data = db_session.query(SellTransaction).filter(
+                    SellTransaction.cass_id == cass_id,
+                    SellTransaction.date >= start_date,
+                    SellTransaction.date <= end_date
+                ).all()
         
         return data
         
     except Exception as e: 
         return "помилка формування статистики: " + str(e)
+
 
 @app.route("/logout")
 def logout():

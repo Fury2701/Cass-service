@@ -40,11 +40,12 @@
         <div class="sel">
             <label for="info">Номер каси:</label>
             <select class="cass" name="cass" id="cass">
+                <option value="all">Всі</option>
                 {% for cass_id in cass %}
                     <option value="{{ cass_id }}">{{ cass_id }}</option>
                 {% endfor %}
             </select>
-        </div>
+        </div>        
         <div class="tab">
             <table class="table table-striped mt-5" style="max-width: 95%;">
                 <thead>
